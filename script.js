@@ -155,33 +155,26 @@ async function readFileAsArrayBuffer(file) {
   const url = URL.createObjectURL(file);
   try {
     const response = await fetch(url);
-    console.log("Fetch");
     const buffer = await response.arrayBuffer();
-    console.log(buffer);
     return buffer;
   } finally {
     URL.revokeObjectURL(url);
   }
 }
 
-// Download helper
+// Download helper → langsung download di semua platform
 function downloadBytes(bytes, filename) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
-  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  if (isMobile) {
-    window.open(url, "_blank"); // buka di tab baru agar user bisa simpan manual
-  } else {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
+  URL.revokeObjectURL(url);
 }
 
 // Event handler
@@ -198,7 +191,7 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
       readFileAsArrayBuffer(pdfFile),
       readFileAsArrayBuffer(xlsxFile),
     ]);
-    console.log("Read Success");
+    console.log("Read success");
 
     const data = loadInvoiceFromUploadedExcel(xlsxBuf);
     const outBytes = await fillInvoice(pdfBuf, data);
