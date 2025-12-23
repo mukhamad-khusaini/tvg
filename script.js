@@ -55,7 +55,7 @@ function loadInvoiceFromUploadedExcel(arrayBuffer) {
   const orders = [];
   for (let i = 5; i < ordersData.length; i += 5) {
     const chunk = ordersData.slice(i, i + 5);
-    if (chunk.length < 5) continue; // skip kalau tidak lengkap
+    if (chunk.length < 5) continue;
 
     const row = {
       nights: cleanNumber(chunk[0]) + " Malam",
@@ -65,7 +65,6 @@ function loadInvoiceFromUploadedExcel(arrayBuffer) {
       description: chunk[4],
     };
 
-    // skip placeholder
     if (
       String(row.nights).includes("REQUIRED!!") ||
       String(row.rate).includes("ISI DISINI") ||
@@ -132,7 +131,7 @@ async function fillInvoice(pdfArrayBuffer, data) {
   page.drawText(data.checkOut || "", { x: 203, y: 582, size: 12, font });
   page.drawText(data.room || "", { x: 203, y: 566, size: 12, font });
 
-  // --- Orders (1–10 baris fleksibel) ---
+  // --- Orders ---
   let startY = 500;
   const lineGap = 20;
   for (let i = 0; i < data.orders.length; i++) {
@@ -151,9 +150,9 @@ async function fillInvoice(pdfArrayBuffer, data) {
   return await pdfDoc.save();
 }
 
-// FileReader helper → diganti dengan file.arrayBuffer()
+// File.arrayBuffer() helper
 function readFileAsArrayBuffer(file) {
-  if (file.arrayBuffer) {
+  if (file && file.arrayBuffer) {
     return file.arrayBuffer(); // cara modern, lebih stabil di Android/iOS
   }
   // fallback untuk browser lama
@@ -169,7 +168,7 @@ function readFileAsArrayBuffer(file) {
   });
 }
 
-// Download helper (desktop + Android friendly)
+// Download helper
 function downloadBytes(bytes, filename) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
@@ -177,10 +176,8 @@ function downloadBytes(bytes, filename) {
   const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
   if (isMobile) {
-    // buka di tab baru agar user bisa download manual
-    window.open(url, "_blank");
+    window.open(url, "_blank"); // buka di tab baru agar user bisa simpan manual
   } else {
-    // desktop: langsung download
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
@@ -201,27 +198,27 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   }
 
   try {
-    console.log("Read pdf");
+    console.log("--Read File--");
     const [pdfBuf, xlsxBuf] = await Promise.all([
       readFileAsArrayBuffer(pdfFile),
       readFileAsArrayBuffer(xlsxFile),
     ]);
-    console.log("Read pdf success");
+    console.log("--Read File Success--");
 
-    console.log("Load data");
+    console.log("--Load data--");
     const data = loadInvoiceFromUploadedExcel(xlsxBuf);
-    console.log("Load data success");
+    console.log("--Load data success--");
 
-    console.log("Fill invoice");
+    console.log("--Fill--");
     const outBytes = await fillInvoice(pdfBuf, data);
-    console.log("Fill invoice success");
+    console.log("--Fill success--");
     const outputName = `Invoice_${data.name || "Guest"}_${
       data.invNumber || "INV"
     }.pdf`;
 
-    console.log("Download invoice");
+    console.log("--Download--");
     downloadBytes(outBytes, outputName);
-    console.log("Download invoice success");
+    console.log("--Download success--");
   } catch (err) {
     console.error(err);
     alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
