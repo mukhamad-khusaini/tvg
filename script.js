@@ -16,6 +16,10 @@ function loadInvoiceFromUploadedExcel(arrayBuffer) {
     .sheet_to_json(sheet, { header: 1, raw: false })
     .flat();
 
+  console.log(workbook);
+  console.log(sheet);
+  console.log(rows);
+
   let section = null;
   let guestData = [];
   let ordersData = [];
@@ -40,8 +44,6 @@ function loadInvoiceFromUploadedExcel(arrayBuffer) {
     if (section === "orders") ordersData.push(cell);
     if (section === "totals") totalsData.push(cell);
   }
-
-  console.log(ordersData);
 
   // --- GUEST ---
   const invoiceData = {
