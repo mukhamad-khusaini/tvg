@@ -151,36 +151,21 @@ async function fillInvoice(pdfArrayBuffer, data) {
   return await pdfDoc.save();
 }
 
-// FileReader helper (mobile friendly)
+// FileReader helper → diganti dengan file.arrayBuffer()
 function readFileAsArrayBuffer(file) {
+  if (file.arrayBuffer) {
+    return file.arrayBuffer(); // cara modern, lebih stabil di Android/iOS
+  }
+  // fallback untuk browser lama
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    // fallback: gunakan binary string di mobile
-    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-      reader.onload = () => {
-        const binary = reader.result;
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        resolve(bytes.buffer);
-      };
-      reader.onerror = (e) => {
-        console.error("FileReader error:", e);
-        reject(new Error("Gagal membaca file di mobile browser"));
-      };
-      reader.readAsBinaryString(file);
-    } else {
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (e) => {
-        console.error("FileReader error:", e);
-        reject(
-          new Error("Gagal membaca file. Pastikan format dan ukuran sesuai.")
-        );
-      };
-      reader.readAsArrayBuffer(file);
-    }
+    const url = URL.createObjectURL(file);
+    fetch(url)
+      .then((res) => res.arrayBuffer())
+      .then((buf) => {
+        URL.revokeObjectURL(url);
+        resolve(buf);
+      })
+      .catch((err) => reject(err));
   });
 }
 
@@ -216,28 +201,27 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   }
 
   try {
-    console.log("---Read Process---");
+    console.log("Read pdf");
     const [pdfBuf, xlsxBuf] = await Promise.all([
       readFileAsArrayBuffer(pdfFile),
       readFileAsArrayBuffer(xlsxFile),
     ]);
-    console.log("---Read Process Success---");
+    console.log("Read pdf success");
 
-    console.log("---Load Invoice Process---");
+    console.log("Load data");
     const data = loadInvoiceFromUploadedExcel(xlsxBuf);
-    console.log("---Load Invoice Process Success---");
+    console.log("Load data success");
 
-    console.log("---Fill Invoice Process---");
+    console.log("Fill invoice");
     const outBytes = await fillInvoice(pdfBuf, data);
-    console.log("---Fill Invoice Process Success---");
-
+    console.log("Fill invoice success");
     const outputName = `Invoice_${data.name || "Guest"}_${
       data.invNumber || "INV"
     }.pdf`;
 
-    console.log("---Download Invoice Process---");
+    console.log("Download invoice");
     downloadBytes(outBytes, outputName);
-    console.log("---Download Invoice Process Success---");
+    console.log("Download invoice success");
   } catch (err) {
     console.error(err);
     alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
