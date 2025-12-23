@@ -151,13 +151,36 @@ async function fillInvoice(pdfArrayBuffer, data) {
   return await pdfDoc.save();
 }
 
-// FileReader helper
+// FileReader helper (mobile friendly)
 function readFileAsArrayBuffer(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
+
+    // fallback: gunakan binary string di mobile
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      reader.onload = () => {
+        const binary = reader.result;
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        resolve(bytes.buffer);
+      };
+      reader.onerror = (e) => {
+        console.error("FileReader error:", e);
+        reject(new Error("Gagal membaca file di mobile browser"));
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (e) => {
+        console.error("FileReader error:", e);
+        reject(
+          new Error("Gagal membaca file. Pastikan format dan ukuran sesuai.")
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    }
   });
 }
 
@@ -166,7 +189,6 @@ function downloadBytes(bytes, filename) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
-  // Deteksi mobile
   const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
   if (isMobile) {
@@ -207,8 +229,6 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
     downloadBytes(outBytes, outputName);
   } catch (err) {
     console.error(err);
-    alert(
-      `Terjadi kesalahan saat memproses file. Lihat console untuk detail. ${err}`
-    );
+    alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
   }
 });
