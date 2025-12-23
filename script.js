@@ -150,22 +150,18 @@ async function fillInvoice(pdfArrayBuffer, data) {
   return await pdfDoc.save();
 }
 
-// File.arrayBuffer() helper
-function readFileAsArrayBuffer(file) {
-  if (file && file.arrayBuffer) {
-    return file.arrayBuffer(); // cara modern, lebih stabil di Android/iOS
+// Read file dengan metode URL + fetch
+async function readFileAsArrayBuffer(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const response = await fetch(url);
+    console.log("Fetch");
+    const buffer = await response.arrayBuffer();
+    console.log(buffer);
+    return buffer;
+  } finally {
+    URL.revokeObjectURL(url);
   }
-  // fallback untuk browser lama
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    fetch(url)
-      .then((res) => res.arrayBuffer())
-      .then((buf) => {
-        URL.revokeObjectURL(url);
-        resolve(buf);
-      })
-      .catch((err) => reject(err));
-  });
 }
 
 // Download helper
@@ -198,29 +194,22 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   }
 
   try {
-    console.log("--Read File--");
     const [pdfBuf, xlsxBuf] = await Promise.all([
       readFileAsArrayBuffer(pdfFile),
       readFileAsArrayBuffer(xlsxFile),
     ]);
-    console.log("--Read File Success--");
+    console.log("Read Success");
 
-    console.log("--Load data--");
     const data = loadInvoiceFromUploadedExcel(xlsxBuf);
-    console.log("--Load data success--");
-
-    console.log("--Fill--");
     const outBytes = await fillInvoice(pdfBuf, data);
-    console.log("--Fill success--");
     const outputName = `Invoice_${data.name || "Guest"}_${
       data.invNumber || "INV"
     }.pdf`;
-
-    console.log("--Download--");
     downloadBytes(outBytes, outputName);
-    console.log("--Download success--");
   } catch (err) {
     console.error(err);
-    alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
+    alert(
+      "Terjadi kesalahan saat memproses file. Pastikan file berasal dari penyimpanan lokal HP."
+    );
   }
 });
