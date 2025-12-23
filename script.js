@@ -161,15 +161,27 @@ function readFileAsArrayBuffer(file) {
   });
 }
 
-// Download helper
+// Download helper (desktop + Android friendly)
 function downloadBytes(bytes, filename) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+
+  // Deteksi mobile
+  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // buka di tab baru agar user bisa download manual
+    window.open(url, "_blank");
+  } else {
+    // desktop: langsung download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 
 // Event handler
@@ -196,7 +208,7 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   } catch (err) {
     console.error(err);
     alert(
-      "Terjadi kesalahan saat memproses file. Lihat console untuk detail." + err
+      `Terjadi kesalahan saat memproses file. Lihat console untuk detail. ${err}`
     );
   }
 });
