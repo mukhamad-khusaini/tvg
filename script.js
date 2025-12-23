@@ -216,17 +216,28 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   }
 
   try {
+    console.log("---Read Process---");
     const [pdfBuf, xlsxBuf] = await Promise.all([
       readFileAsArrayBuffer(pdfFile),
       readFileAsArrayBuffer(xlsxFile),
     ]);
+    console.log("---Read Process Success---");
 
+    console.log("---Load Invoice Process---");
     const data = loadInvoiceFromUploadedExcel(xlsxBuf);
+    console.log("---Load Invoice Process Success---");
+
+    console.log("---Fill Invoice Process---");
     const outBytes = await fillInvoice(pdfBuf, data);
+    console.log("---Fill Invoice Process Success---");
+
     const outputName = `Invoice_${data.name || "Guest"}_${
       data.invNumber || "INV"
     }.pdf`;
+
+    console.log("---Download Invoice Process---");
     downloadBytes(outBytes, outputName);
+    console.log("---Download Invoice Process Success---");
   } catch (err) {
     console.error(err);
     alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
