@@ -41,6 +41,8 @@ function loadInvoiceFromUploadedExcel(arrayBuffer) {
     if (section === "totals") totalsData.push(cell);
   }
 
+  console.log(ordersData);
+
   // --- GUEST ---
   const invoiceData = {
     name: guestData[6],
