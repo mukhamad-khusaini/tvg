@@ -195,6 +195,8 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
     downloadBytes(outBytes, outputName);
   } catch (err) {
     console.error(err);
-    alert("Terjadi kesalahan saat memproses file. Lihat console untuk detail.");
+    alert(
+      "Terjadi kesalahan saat memproses file. Lihat console untuk detail." + err
+    );
   }
 });
